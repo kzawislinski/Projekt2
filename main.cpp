@@ -10,13 +10,13 @@
 
 int main() {
   std::fstream plik;
-
+  const std::string filename="baza.bin";
   std::string komenda;
   std::vector <std::unique_ptr<Pojazd>> pojazdy;
   bool temp;
 
   lista_komend();
-  odczytaj(pojazdy, plik);
+  odczytaj(pojazdy, filename);
 
   for (int i=0;i!=1;){         //petla glowna
 
@@ -41,13 +41,13 @@ int main() {
       listuj(pojazdy);
     }
     else if(komenda=="end"){
-      i=koniec(pojazdy, plik);
+      i=koniec(pojazdy, filename);
     }
     else if(komenda=="save"){
-      zapisz(pojazdy, plik);
+      zapisz(pojazdy, filename);
     }
     else if(komenda=="read"){
-      odczytaj(pojazdy, plik);
+      odczytaj(pojazdy, filename);
       listuj(pojazdy);
     }
     else if(komenda=="help"){

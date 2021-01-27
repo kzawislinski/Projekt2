@@ -2,40 +2,37 @@
 
 bool nowy_pojazd(std::vector<std::unique_ptr<Pojazd>>& pojazdy){
       std::string komenda;
+      std::string komenda1;
       std::string komenda2;
       int temp;
       unsigned long longtemp;
       std::cout << "Podaj rodzaj pojazdu (osobowy/motocykl)\n";
       std::cin >> komenda;
+      if(komenda!="osobowy" && komenda!="motocykl"){
+        std::cout << "Komenda nierozpoznana\n";
+        return false;
+      }
+      std::cout<<"Podaj marke pojazdu\n";
+      std::cin.ignore();
+      std::getline(std::cin,komenda1);
+      std::cout<<"Podaj model pojazdu\n";
+      std::getline(std::cin,komenda2);
+      std::cout<<"Podaj przebieg\n";
+      std::cin>>longtemp;
       if (komenda=="osobowy"){
-        std::cout<<"Podaj marke pojazdu\n";
-        std::cin.ignore();
-        std::getline(std::cin,komenda);
-        std::cout<<"Podaj model pojazdu\n";
-        std::getline(std::cin,komenda2);
         std::cout<<"Podaj liczbe drzwi\n";
         std::cin>>temp;
-        std::cout<<"Podaj przebieg\n";
-        std::cin>>longtemp;
-        pojazdy.push_back(std::make_unique<Osobowy>(komenda,komenda2,temp,longtemp));
+        pojazdy.push_back(std::make_unique<Osobowy>(komenda1,komenda2,temp,longtemp));
         return true;
       }
       else if(komenda=="motocykl"){
-        std::cout<<"Podaj marke pojazdu\n";
-        std::cin.ignore();
-        std::getline(std::cin,komenda);
-        std::cout<<"Podaj model pojazdu\n";
-        std::getline(std::cin,komenda2);
         std::cout<<"Podaj liczbe cylindrow\n";
         std::cin>>temp;
-        std::cout<<"Podaj przebieg\n";
-        std::cin>>longtemp;
-        pojazdy.push_back(std::make_unique<Motocykl>(komenda,komenda2,temp,longtemp));
+        pojazdy.push_back(std::make_unique<Motocykl>(komenda1,komenda2,temp,longtemp));
         return true;
       }
       else{
-        std::cout << "Komenda nierozpoznana\n";
-        return false;
+       return false;
       }
 } //funkcja dodaje nowy pojazd do wektora i zwraca true jesli udalo sie dodac
 
@@ -108,13 +105,24 @@ void listuj(std::vector<std::unique_ptr<Pojazd>>& pojazdy){
 
 
 
-void zapisz(std::vector<std::unique_ptr<Pojazd>>& pojazdy, std::fstream& plik){
-  plik.open("baza.bin",  std::ios::out | std::ios::binary);
+void zapisz(std::vector<std::unique_ptr<Pojazd>>& pojazdy, std::string filename){
+  std::fstream plik;
+  plik.open(filename,  std::ios::out | std::ios::binary);
   if (plik.good()){
     int temp=pojazdy.size();
+    int temp1;
+    unsigned long temp2;
     plik.write((const char*)&temp, sizeof(int));
     for(int i=0;i<pojazdy.size();i++){
-      pojazdy[i]->zapisz_pojazd(plik);
+      temp1=pojazdy[i]->getID();
+      //pojazdy[i]->zapisz_pojazd(plik);
+      plik.write((const char*)&temp1, sizeof(int));
+      plik<<pojazdy[i]->getMarka()<<'\0';
+      plik<<pojazdy[i]->getModel()<<'\0';
+      temp1=pojazdy[i]->getUnique();
+      plik.write((const char*)&temp1, sizeof(int));
+      temp2=pojazdy[i]->getPrzebieg();
+      plik.write((const char*)&temp2, sizeof(unsigned long));
     }
     plik.close();
   }
@@ -127,21 +135,30 @@ void zapisz(std::vector<std::unique_ptr<Pojazd>>& pojazdy, std::fstream& plik){
 
 
 
-void odczytaj(std::vector<std::unique_ptr<Pojazd>>& pojazdy, std::fstream& plik){
+void odczytaj(std::vector<std::unique_ptr<Pojazd>>& pojazdy, std::string filename){
+  std::fstream plik;
   int temp;
+  int temp1;
   int temp2;
+  std::string tekst;
+  std::string tekst2;
   long longtemp;
-  plik.open("baza.bin", std::ios::in | std::ios::binary);
+  plik.open(filename, std::ios::in | std::ios::binary);
     if (plik.good()){
       plik.read((char*)&temp,sizeof(int)); //odczyt liczby elementow w bazie
       pojazdy.clear(); // czyszczenie dotychczasowego wektora
       for (int i=0;i<temp;i++){
-        plik.read((char*)&temp2,sizeof(int)); //odczyt typu pojazdu
-        if (temp2==0){ //odczyt jesli osobowy
-          Osobowy::czytaj(pojazdy, plik);
+        plik.read((char*)&temp1,sizeof(int)); //odczyt typu pojazdu
+        getline(plik, tekst, '\0');
+        getline(plik, tekst2, '\0');
+        plik.read((char*)&temp2,sizeof(int));
+        plik.read((char*)&longtemp,sizeof(unsigned long));
+
+        if (temp1==0){ //odczyt jesli osobowy
+          pojazdy.push_back(std::make_unique<Osobowy>(tekst,tekst2,temp2,longtemp));
         }
-        else if (temp2==1){ //odczyt jesli motocykl
-          Motocykl::czytaj(pojazdy, plik);
+        else if (temp1==1){ //odczyt jesli motocykl
+          pojazdy.push_back(std::make_unique<Motocykl>(tekst,tekst2,temp2,longtemp));
         }
         else std::cout <<"Blad pliku\n";
       }
@@ -153,12 +170,12 @@ void odczytaj(std::vector<std::unique_ptr<Pojazd>>& pojazdy, std::fstream& plik)
 
 
 
-int koniec(std::vector<std::unique_ptr<Pojazd>>& pojazdy, std::fstream& plik){
+int koniec(std::vector<std::unique_ptr<Pojazd>>& pojazdy, std::string filename){
   std::string komenda;
   std::cout<<"Czy chcesz zapisac przed zamknieciem? (tak/nie)\n";
   std::cin>>komenda;
   if(komenda=="tak"){
-    zapisz(pojazdy,plik);
+    zapisz(pojazdy,filename);
     return 1;
   }
   else if(komenda=="nie"){
