@@ -14,11 +14,22 @@ int main() {
   std::string komenda;
   std::vector <std::unique_ptr<Pojazd>> pojazdy;
   bool temp;
+  int i=0;
+  try{
+    odczytaj(pojazdy, filename);
+    lista_komend();
+  }
+  catch(int a){
+    if (a==404){
+      std::cout<<"ERROR "<<a<<": Nie znaleziono pliku\n";
+    }
+    if (a==418){
+      std::cout<<"I’m a teapot\n";
+    }
+    i=1;
+  }
 
-  lista_komend();
-  odczytaj(pojazdy, filename);
-
-  for (int i=0;i!=1;){         //petla glowna
+  while (i!=1){         //petla glowna
 
     std::cin >> komenda;
 
@@ -44,7 +55,18 @@ int main() {
       i=koniec(pojazdy, filename);
     }
     else if(komenda=="save"){
-      zapisz(pojazdy, filename);
+      try{
+        odczytaj(pojazdy, filename);
+      }
+      catch(int a){
+        if (a==404){
+          std::cout<<"ERROR "<<a<<": Nie znaleziono pliku\n";
+        }
+        if (a==418){
+          std::cout<<"I’m a teapot\n";
+        }
+        i=1;
+      }
     }
     else if(komenda=="read"){
       odczytaj(pojazdy, filename);

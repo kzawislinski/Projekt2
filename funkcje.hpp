@@ -107,8 +107,9 @@ void listuj(std::vector<std::unique_ptr<Pojazd>>& pojazdy){
 
 void zapisz(std::vector<std::unique_ptr<Pojazd>>& pojazdy, std::string filename){
   std::fstream plik;
-  plik.open(filename,  std::ios::out | std::ios::binary);
-  if (plik.good()){
+  try{
+    plik.open(filename,  std::ios::out | std::ios::binary);
+    if (plik.good()!=true){throw 1;}
     int temp=pojazdy.size();
     int temp1;
     unsigned long temp2;
@@ -125,11 +126,12 @@ void zapisz(std::vector<std::unique_ptr<Pojazd>>& pojazdy, std::string filename)
       plik.write((const char*)&temp2, sizeof(unsigned long));
     }
     plik.close();
+    std::cout<<"Baza zapisana\n";  
   }
-  else{
-    std::cout<<"Blad pliku\n";
+  catch(int i){
+    std::cout<<"ERROR: Blad pliku\n";
   }
-  std::cout<<"Baza zapisana\n";
+  
 } //funkcja zapisuje baze do pliku
 
 
@@ -144,27 +146,26 @@ void odczytaj(std::vector<std::unique_ptr<Pojazd>>& pojazdy, std::string filenam
   std::string tekst2;
   long longtemp;
   plik.open(filename, std::ios::in | std::ios::binary);
-    if (plik.good()){
-      plik.read((char*)&temp,sizeof(int)); //odczyt liczby elementow w bazie
-      pojazdy.clear(); // czyszczenie dotychczasowego wektora
-      for (int i=0;i<temp;i++){
-        plik.read((char*)&temp1,sizeof(int)); //odczyt typu pojazdu
-        getline(plik, tekst, '\0');
-        getline(plik, tekst2, '\0');
-        plik.read((char*)&temp2,sizeof(int));
-        plik.read((char*)&longtemp,sizeof(unsigned long));
-
-        if (temp1==0){ //odczyt jesli osobowy
-          pojazdy.push_back(std::make_unique<Osobowy>(tekst,tekst2,temp2,longtemp));
-        }
-        else if (temp1==1){ //odczyt jesli motocykl
-          pojazdy.push_back(std::make_unique<Motocykl>(tekst,tekst2,temp2,longtemp));
-        }
-        else std::cout <<"Blad pliku\n";
-      }
-      plik.close();
+  if (plik.good()!=true){
+    throw 404;
+  }
+  plik.read((char*)&temp,sizeof(int)); //odczyt liczby elementow w bazie
+  pojazdy.clear(); // czyszczenie dotychczasowego wektora
+  for (int i=0;i<temp;i++){
+    plik.read((char*)&temp1,sizeof(int)); //odczyt typu pojazdu
+    getline(plik, tekst, '\0');
+    getline(plik, tekst2, '\0');
+    plik.read((char*)&temp2,sizeof(int));
+    plik.read((char*)&longtemp,sizeof(unsigned long));
+    if (temp1==0){ //odczyt jesli osobowy
+      pojazdy.push_back(std::make_unique<Osobowy>(tekst,tekst2,temp2,longtemp));
     }
-    else std::cout<<"Blad pliku\n";
+    else if (temp1==1){ //odczyt jesli motocykl
+      pojazdy.push_back(std::make_unique<Motocykl>(tekst,tekst2,temp2,longtemp));
+    }
+    else throw 418;
+  }
+  plik.close();
 } //funkcja odczytuje baze z pliku
 
 
